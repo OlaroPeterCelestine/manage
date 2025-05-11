@@ -92,7 +92,7 @@
       </li>
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="pages-faq.html">
+        <a class="nav-link collapsed" href="gallery.php">
          <i class="bi bi-images"></i>
 
 
@@ -101,7 +101,7 @@
       </li><!-- End F.A.Q Page Nav -->
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="pages-contact.html">
+        <a class="nav-link collapsed" href="shows.php">
           <i class="bi bi-tv"></i>
 
           <span>Shows</span>
@@ -109,7 +109,7 @@
       </li><!-- End Contact Page Nav -->
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="pages-register.html">
+        <a class="nav-link collapsed" href="hosts.php">
          <i class="bi bi-person-lines-fill"></i>
 
           <span>Hosts</span>
@@ -117,7 +117,7 @@
       </li><!-- End Register Page Nav -->
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="pages-login.html">
+        <a class="nav-link collapsed" href="users.php">
           <i class="bi bi-people"></i>
 
           <span>Users</span>
