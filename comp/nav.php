@@ -85,7 +85,7 @@
   
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="users-profile.html">
+        <a class="nav-link collapsed" href="news.php">
           <i class="bi bi-newspaper"></i>
           <span>News</span>
         </a>
