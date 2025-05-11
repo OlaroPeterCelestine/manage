@@ -60,6 +60,7 @@ $result = $conn->query("SELECT * FROM gallery_images");
 <main id="main" class="main">
     <div class="pagetitle">
         <h1>Manage Images</h1>
+
     </div><!-- End Page Title -->
 
     <section class="section">
@@ -73,7 +74,6 @@ $result = $conn->query("SELECT * FROM gallery_images");
                             <div class="row justify-content-center">
                                 <div class="col-md-10">
 
-                                        <h4 class="mb-4 text-center">Manage Gallery Images</h4>
 
                                         <?= $message ?>
 
