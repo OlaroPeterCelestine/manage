@@ -41,6 +41,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST['action'] === "edit") {
         : "<div class='alert alert-danger'>Failed to update post.</div>";
 }
 
+
 // Handle delete
 if (isset($_GET['delete'])) {
     $id = $_GET['delete'];
