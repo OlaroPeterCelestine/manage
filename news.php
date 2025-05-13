@@ -67,6 +67,7 @@ if (isset($_GET['delete'])) {
 $posts = $conn->query("SELECT * FROM blog_posts ORDER BY id DESC");
 ?>
 
+
 <main id="main" class="main">
     <div class="pagetitle">
         <h1>Blog Post Manager</h1>
