@@ -73,42 +73,46 @@ $posts = $conn->query("SELECT * FROM blog_posts ORDER BY id DESC");
     </div>
 
     <section class="section">
-        <div class="container">
+        <div class="container-fluid px-3 px-md-5">
             <?= $message ?>
 
             <!-- Add New Post -->
-            <form method="POST" enctype="multipart/form-data" class="card p-4 shadow-sm bg-white mb-5">
-                <input type="hidden" name="action" value="create">
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Author</label>
-                        <input type="text" name="author" class="form-control" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Title</label>
-                        <input type="text" name="title" class="form-control" required>
-                    </div>
-                </div>
+            <div class="row">
+                <div class="col-12 col-lg-10 col-xl-8 mx-auto">
+                    <form method="POST" enctype="multipart/form-data" class="card p-4 shadow-sm bg-white mb-5">
+                        <input type="hidden" name="action" value="create">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Author</label>
+                                <input type="text" name="author" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Title</label>
+                                <input type="text" name="title" class="form-control" required>
+                            </div>
+                        </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Description</label>
-                    <textarea name="description" class="form-control" rows="4" required></textarea>
-                </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control" rows="4" required></textarea>
+                        </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Image</label>
-                    <input type="file" name="image" class="form-control" required>
-                </div>
+                        <div class="mb-3">
+                            <label class="form-label">Image</label>
+                            <input type="file" name="image" class="form-control" required>
+                        </div>
 
-                <button type="submit" class="btn btn-success">Create Post</button>
-            </form>
+                        <button type="submit" class="btn btn-success">Create Post</button>
+                    </form>
+                </div>
+            </div>
 
             <!-- Posts Table -->
-            <div class="card">
+            <div class="card table-responsive">
                 <div class="card-body">
                     <h5 class="card-title">All Blog Posts</h5>
-                    <table class="table table-striped">
-                        <thead>
+                    <table class="table table-striped table-hover align-middle">
+                        <thead class="table-dark">
                             <tr>
                                 <th>ID</th>
                                 <th>Image</th>
