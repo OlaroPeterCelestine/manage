@@ -6,27 +6,36 @@ $message = "";
 $editing = false;
 $editPost = null;
 
-// Handle new post creation
+// Allowed image types
+$allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+// ---------------------- CREATE ----------------------
 if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST['action'] === "create") {
     $author = $_POST['author'];
     $title = $_POST['title'];
     $desc = $_POST['description'];
     $link = $_POST['link'];
+
     $image = $_FILES['image']['name'];
+    $imageType = $_FILES['image']['type'];
     $target = "uploads/" . basename($image);
 
-    if (!empty($image) && move_uploaded_file($_FILES['image']['tmp_name'], $target)) {
-        $stmt = $conn->prepare("INSERT INTO blog_posts (author, title, description, image, link) VALUES (?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssss", $author, $title, $desc, $image, $link);
-        $message = $stmt->execute()
-            ? "<div class='alert alert-success'>Post created successfully.</div>"
-            : "<div class='alert alert-danger'>Failed to insert into database.</div>";
+    if (!empty($image) && in_array($imageType, $allowedTypes)) {
+        if (move_uploaded_file($_FILES['image']['tmp_name'], $target)) {
+            $stmt = $conn->prepare("INSERT INTO blog_posts (author, title, description, image, link) VALUES (?, ?, ?, ?, ?)");
+            $stmt->bind_param("sssss", $author, $title, $desc, $image, $link);
+            $message = $stmt->execute()
+                ? "<div class='alert alert-success'>Post created successfully.</div>"
+                : "<div class='alert alert-danger'>Failed to insert into database.</div>";
+        } else {
+            $message = "<div class='alert alert-warning'>Image upload failed.</div>";
+        }
     } else {
-        $message = "<div class='alert alert-warning'>Image upload failed or missing.</div>";
+        $message = "<div class='alert alert-warning'>Invalid or missing image file.</div>";
     }
 }
 
-// Handle post edit
+// ---------------------- EDIT ----------------------
 if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST['action'] === "edit") {
     $id = $_POST['edit_id'];
     $author = $_POST['edit_author'];
@@ -34,15 +43,35 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST['action'] === "edit") {
     $desc = $_POST['edit_description'];
     $link = $_POST['edit_link'];
 
-    $stmt = $conn->prepare("UPDATE blog_posts SET author=?, title=?, description=?, link=? WHERE id=?");
-    $stmt->bind_param("ssssi", $author, $title, $desc, $link, $id);
-    $message = $stmt->execute()
-        ? "<div class='alert alert-success'>Post updated successfully.</div>"
-        : "<div class='alert alert-danger'>Failed to update post.</div>";
+    $newImage = $_FILES['edit_image']['name'];
+    $imageType = $_FILES['edit_image']['type'];
+
+    if (!empty($newImage) && in_array($imageType, $allowedTypes)) {
+        $target = "uploads/" . basename($newImage);
+        if (move_uploaded_file($_FILES['edit_image']['tmp_name'], $target)) {
+            // Delete old image
+            $res = $conn->query("SELECT image FROM blog_posts WHERE id = $id");
+            $row = $res->fetch_assoc();
+            if (file_exists("uploads/" . $row['image'])) unlink("uploads/" . $row['image']);
+
+            $stmt = $conn->prepare("UPDATE blog_posts SET author=?, title=?, description=?, link=?, image=? WHERE id=?");
+            $stmt->bind_param("sssssi", $author, $title, $desc, $link, $newImage, $id);
+        } else {
+            $message = "<div class='alert alert-warning'>Failed to upload new image.</div>";
+        }
+    } else {
+        $stmt = $conn->prepare("UPDATE blog_posts SET author=?, title=?, description=?, link=? WHERE id=?");
+        $stmt->bind_param("ssssi", $author, $title, $desc, $link, $id);
+    }
+
+    if (isset($stmt) && $stmt->execute()) {
+        $message = "<div class='alert alert-success'>Post updated successfully.</div>";
+    } else {
+        $message = "<div class='alert alert-danger'>Failed to update post.</div>";
+    }
 }
 
-
-// Handle delete
+// ---------------------- DELETE ----------------------
 if (isset($_GET['delete'])) {
     $id = $_GET['delete'];
     $res = $conn->query("SELECT image FROM blog_posts WHERE id = $id");
@@ -52,7 +81,7 @@ if (isset($_GET['delete'])) {
     $message = "<div class='alert alert-success'>Post deleted successfully.</div>";
 }
 
-// Fetch all posts
+// ---------------------- FETCH ----------------------
 $posts = $conn->query("SELECT * FROM blog_posts ORDER BY id DESC");
 ?>
 
@@ -65,7 +94,7 @@ $posts = $conn->query("SELECT * FROM blog_posts ORDER BY id DESC");
         <div class="container">
             <?= $message ?>
 
-            <!-- Add New Post -->
+            <!-- CREATE FORM -->
             <form method="POST" enctype="multipart/form-data" class="card p-4 shadow-sm bg-white mb-5">
                 <input type="hidden" name="action" value="create">
                 <div class="row mb-3">
@@ -98,7 +127,7 @@ $posts = $conn->query("SELECT * FROM blog_posts ORDER BY id DESC");
                 <button type="submit" class="btn btn-success">Create Post</button>
             </form>
 
-            <!-- Posts Table -->
+            <!-- POSTS TABLE -->
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">All Blog Posts</h5>
@@ -127,7 +156,7 @@ $posts = $conn->query("SELECT * FROM blog_posts ORDER BY id DESC");
                                     <td><a href="<?= htmlspecialchars($row['link']) ?>" target="_blank">Link</a></td>
                                     <td><?= $row['created_at'] ?? '—' ?></td>
                                     <td>
-                                        <button class="btn btn-sm btn-warning" onclick="populateEditForm(<?= htmlspecialchars(json_encode($row)) ?>)">Edit</button>
+                                        <button class="btn btn-sm btn-warning" onclick='populateEditForm(<?= json_encode($row) ?>)'>Edit</button>
                                     </td>
                                     <td>
                                         <a href="?delete=<?= $row['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure to delete?')">Delete</a>
@@ -142,7 +171,7 @@ $posts = $conn->query("SELECT * FROM blog_posts ORDER BY id DESC");
     </section>
 </main>
 
-<!-- Edit Modal -->
+<!-- EDIT MODAL -->
 <div class="modal fade" id="editModal" tabindex="-1">
     <div class="modal-dialog">
         <form method="POST" enctype="multipart/form-data" class="modal-content">
@@ -181,6 +210,7 @@ $posts = $conn->query("SELECT * FROM blog_posts ORDER BY id DESC");
     </div>
 </div>
 
+<!-- SCRIPTS -->
 <script>
     function populateEditForm(row) {
         const modal = new bootstrap.Modal(document.getElementById('editModal'));
