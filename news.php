@@ -3,52 +3,74 @@ require_once 'env/config.php';
 include 'comp/nav.php';
 
 $message = "";
+$allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+$maxSize = 2 * 1024 * 1024;
 
-// Handle new post creation
+// Create Post
 if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST['action'] === "create") {
     $author = $_POST['author'];
     $title = $_POST['title'];
     $desc = $_POST['description'];
-    $image = $_FILES['image']['name'];
-    $target = "uploads/" . basename($image);
 
-    if (!empty($image) && move_uploaded_file($_FILES['image']['tmp_name'], $target)) {
-        $stmt = $conn->prepare("INSERT INTO blog_posts (author, title, description, image) VALUES (?, ?, ?, ?)");
-        $stmt->bind_param("ssss", $author, $title, $desc, $image);
-        $message = $stmt->execute()
-            ? "<div class='alert alert-success'>Post created successfully.</div>"
-            : "<div class='alert alert-danger'>Failed to insert into database.</div>";
+    $image  = $_FILES['image']['name'];
+    $tmp    = $_FILES['image']['tmp_name'];
+    $type   = $_FILES['image']['type'];
+    $size   = $_FILES['image']['size'];
+
+    if (!empty($image) && in_array($type, $allowedTypes) && $size <= $maxSize) {
+        $target = "uploads/" . basename($image);
+
+        if (move_uploaded_file($tmp, $target)) {
+            $stmt = $conn->prepare("INSERT INTO blog_posts (author, title, description, image) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param("ssss", $author, $title, $desc, $image);
+
+            $message = $stmt->execute()
+                ? "<div class='alert alert-success'>Post created successfully.</div>"
+                : "<div class='alert alert-danger'>Failed to insert into database.</div>";
+        } else {
+            $message = "<div class='alert alert-warning'>Failed to move uploaded image.</div>";
+        }
     } else {
-        $message = "<div class='alert alert-warning'>Image upload failed or missing.</div>";
+        $message = "<div class='alert alert-warning'>Invalid image (JPG/PNG/GIF, ≤ 2MB).</div>";
     }
 }
 
-// Handle post edit
+// Edit Post
 if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST['action'] === "edit") {
-    $id = $_POST['edit_id'];
+    $id     = $_POST['edit_id'];
     $author = $_POST['edit_author'];
-    $title = $_POST['edit_title'];
-    $desc = $_POST['edit_description'];
+    $title  = $_POST['edit_title'];
+    $desc   = $_POST['edit_description'];
 
     $newImage = $_FILES['edit_image']['name'];
-    if (!empty($newImage)) {
+    $tmp      = $_FILES['edit_image']['tmp_name'];
+    $type     = $_FILES['edit_image']['type'];
+    $size     = $_FILES['edit_image']['size'];
+
+    if (!empty($newImage) && in_array($type, $allowedTypes) && $size <= $maxSize) {
         $target = "uploads/" . basename($newImage);
-        move_uploaded_file($_FILES['edit_image']['tmp_name'], $target);
-        $stmt = $conn->prepare("UPDATE blog_posts SET author=?, title=?, description=?, image=? WHERE id=?");
-        $stmt->bind_param("ssssi", $author, $title, $desc, $newImage, $id);
+        if (move_uploaded_file($tmp, $target)) {
+            $stmt = $conn->prepare("UPDATE blog_posts SET author=?, title=?, description=?, image=? WHERE id=?");
+            $stmt->bind_param("ssssi", $author, $title, $desc, $newImage, $id);
+        } else {
+            $message = "<div class='alert alert-warning'>Failed to upload image.</div>";
+        }
     } else {
         $stmt = $conn->prepare("UPDATE blog_posts SET author=?, title=?, description=? WHERE id=?");
         $stmt->bind_param("sssi", $author, $title, $desc, $id);
     }
 
-    $message = $stmt->execute()
-        ? "<div class='alert alert-success'>Post updated successfully.</div>"
-        : "<div class='alert alert-danger'>Failed to update post.</div>";
+    if (isset($stmt)) {
+        $message = $stmt->execute()
+            ? "<div class='alert alert-success'>Post updated successfully.</div>"
+            : "<div class='alert alert-danger'>Failed to update post.</div>";
+    }
 }
 
-// Handle delete
+// Delete Post
 if (isset($_GET['delete'])) {
-    $id = (int)$_GET['delete'];
+    $id = (int) $_GET['delete'];
+
     $res = $conn->query("SELECT image FROM blog_posts WHERE id = $id");
     $row = $res ? $res->fetch_assoc() : null;
 
@@ -63,10 +85,9 @@ if (isset($_GET['delete'])) {
     $message = "<div class='alert alert-success'>Post deleted successfully.</div>";
 }
 
-// Fetch all posts
+// Fetch Posts
 $posts = $conn->query("SELECT * FROM blog_posts ORDER BY id DESC");
 ?>
-
 
 <main id="main" class="main">
     <div class="pagetitle">
@@ -77,11 +98,12 @@ $posts = $conn->query("SELECT * FROM blog_posts ORDER BY id DESC");
         <div class="container-fluid px-3 px-md-5">
             <?= $message ?>
 
-            <!-- Add New Post -->
+            <!-- Create Post Form -->
             <div class="row">
                 <div class="col-12 col-lg-10 col-xl-8 mx-auto">
                     <form method="POST" enctype="multipart/form-data" class="card p-4 shadow-sm bg-white mb-5">
                         <input type="hidden" name="action" value="create">
+
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label">Author</label>
@@ -108,7 +130,7 @@ $posts = $conn->query("SELECT * FROM blog_posts ORDER BY id DESC");
                 </div>
             </div>
 
-            <!-- Posts Table -->
+            <!-- Blog Posts Table -->
             <div class="card table-responsive">
                 <div class="card-body">
                     <h5 class="card-title">All Blog Posts</h5>
@@ -129,16 +151,24 @@ $posts = $conn->query("SELECT * FROM blog_posts ORDER BY id DESC");
                             <?php while ($row = $posts->fetch_assoc()): ?>
                                 <tr>
                                     <td><?= $row['id'] ?></td>
-                                    <td><img src="uploads/<?= $row['image'] ?>" width="60" class="img-thumbnail"></td>
+                                    <td>
+                                        <img src="uploads/<?= htmlspecialchars($row['image']) ?>" width="60" class="img-thumbnail">
+                                    </td>
                                     <td><?= htmlspecialchars($row['title']) ?></td>
                                     <td><?= htmlspecialchars($row['description']) ?></td>
                                     <td><?= htmlspecialchars($row['author']) ?></td>
-                                    <td><?= $row['created_at'] ?? '—' ?></td>
+                                    <td><?= htmlspecialchars($row['created_at'] ?? '—') ?></td>
                                     <td>
-                                        <button class="btn btn-sm btn-warning" onclick="populateEditForm(<?= htmlspecialchars(json_encode($row)) ?>)">Edit</button>
+                                        <button class="btn btn-sm btn-warning"
+                                            onclick="populateEditForm(<?= htmlspecialchars(json_encode($row)) ?>)">
+                                            Edit
+                                        </button>
                                     </td>
                                     <td>
-                                        <a href="?delete=<?= $row['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure to delete?')">Delete</a>
+                                        <a href="?delete=<?= $row['id'] ?>" class="btn btn-sm btn-danger"
+                                            onclick="return confirm('Are you sure to delete?')">
+                                            Delete
+                                        </a>
                                     </td>
                                 </tr>
                             <?php endwhile; ?>
@@ -146,6 +176,7 @@ $posts = $conn->query("SELECT * FROM blog_posts ORDER BY id DESC");
                     </table>
                 </div>
             </div>
+
         </div>
     </section>
 </main>
@@ -156,28 +187,34 @@ $posts = $conn->query("SELECT * FROM blog_posts ORDER BY id DESC");
         <form method="POST" enctype="multipart/form-data" class="modal-content">
             <input type="hidden" name="action" value="edit">
             <input type="hidden" name="edit_id" id="edit_id">
+
             <div class="modal-header">
                 <h5 class="modal-title">Edit Blog Post</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+
             <div class="modal-body">
                 <div class="mb-3">
                     <label>Author</label>
                     <input type="text" name="edit_author" id="edit_author" class="form-control" required>
                 </div>
+
                 <div class="mb-3">
                     <label>Title</label>
                     <input type="text" name="edit_title" id="edit_title" class="form-control" required>
                 </div>
+
                 <div class="mb-3">
                     <label>Description</label>
                     <textarea name="edit_description" id="edit_description" class="form-control" rows="3" required></textarea>
                 </div>
+
                 <div class="mb-3">
                     <label>Change Image (optional)</label>
                     <input type="file" name="edit_image" class="form-control">
                 </div>
             </div>
+
             <div class="modal-footer">
                 <button class="btn btn-primary">Save Changes</button>
             </div>
