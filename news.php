@@ -90,90 +90,86 @@ $posts = $conn->query("SELECT * FROM blog_posts ORDER BY id DESC");
 ?>
 
 <main id="main" class="main">
-    <div class="pagetitle">
-        <h1>Blog Post Manager</h1>
-    </div>
-
+   
     <section class="section">
         <div class="container-fluid px-3 px-md-5">
             <?= $message ?>
 
-            <!-- Create Post Form -->
             <div class="row">
                 <div class="col-12 col-lg-10 col-xl-8 mx-auto">
-                    <form method="POST" enctype="multipart/form-data" class="card p-4 shadow-sm bg-white mb-5">
-                        <input type="hidden" name="action" value="create">
+                    <div class="card shadow-lg border-0 rounded-4">
+                        <div class="card-header bg-success text-white rounded-top-4">
+                            <h5 class="mb-0">Create a New Blog Post</h5>
+                        </div>
+                        <form method="POST" enctype="multipart/form-data" class="card-body p-4">
+                            <input type="hidden" name="action" value="create">
 
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Author</label>
-                                <input type="text" name="author" class="form-control" required>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Author</label>
+                                    <input type="text" name="author" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Title</label>
+                                    <input type="text" name="title" class="form-control" required>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Title</label>
-                                <input type="text" name="title" class="form-control" required>
+
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <textarea name="description" class="form-control" rows="4" required></textarea>
                             </div>
-                        </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Description</label>
-                            <textarea name="description" class="form-control" rows="4" required></textarea>
-                        </div>
+                            <div class="mb-4">
+                                <label class="form-label">Image</label>
+                                <input type="file" name="image" class="form-control" required>
+                            </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Image</label>
-                            <input type="file" name="image" class="form-control" required>
-                        </div>
-
-                        <button type="submit" class="btn btn-success">Create Post</button>
-                    </form>
+                            <button type="submit" class="btn btn-success w-100 rounded-pill">Create Post</button>
+                        </form>
+                    </div>
                 </div>
             </div>
 
-            <!-- Blog Posts Table -->
-            <div class="card table-responsive">
-                <div class="card-body">
-                    <h5 class="card-title">All Blog Posts</h5>
-                    <table class="table table-striped table-hover align-middle">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>ID</th>
-                                <th>Image</th>
-                                <th>Title</th>
-                                <th>Story</th>
-                                <th>Author</th>
-                                <th>Date</th>
-                                <th>Edit</th>
-                                <th>Delete</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php while ($row = $posts->fetch_assoc()): ?>
+            <div class="card shadow-lg border-0 rounded-4 mt-4">
+                <div class="card-body p-4">
+                    <h5 class="card-title text-success">All Blog Posts</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover align-middle">
+                            <thead class="table-success text-dark">
                                 <tr>
-                                    <td><?= $row['id'] ?></td>
-                                    <td>
-                                        <img src="uploads/<?= htmlspecialchars($row['image']) ?>" width="60" class="img-thumbnail">
-                                    </td>
-                                    <td><?= htmlspecialchars($row['title']) ?></td>
-                                    <td><?= htmlspecialchars($row['description']) ?></td>
-                                    <td><?= htmlspecialchars($row['author']) ?></td>
-                                    <td><?= htmlspecialchars($row['created_at'] ?? '—') ?></td>
-                                    <td>
-                                        <button class="btn btn-sm btn-warning"
-                                            onclick="populateEditForm(<?= htmlspecialchars(json_encode($row)) ?>)">
-                                            Edit
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <a href="?delete=<?= $row['id'] ?>" class="btn btn-sm btn-danger"
-                                            onclick="return confirm('Are you sure to delete?')">
-                                            Delete
-                                        </a>
-                                    </td>
+                                    <th>ID</th>
+                                    <th>Image</th>
+                                    <th>Title</th>
+                                    <th>Story</th>
+                                    <th>Author</th>
+                                    <th>Date</th>
+                                    <th>Edit</th>
+                                    <th>Delete</th>
                                 </tr>
-                            <?php endwhile; ?>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                <?php while ($row = $posts->fetch_assoc()): ?>
+                                    <tr>
+                                        <td><?= $row['id'] ?></td>
+                                        <td>
+                                            <img src="uploads/<?= htmlspecialchars($row['image']) ?>" width="60" class="rounded shadow-sm">
+                                        </td>
+                                        <td><?= htmlspecialchars($row['title']) ?></td>
+                                        <td><?= htmlspecialchars($row['description']) ?></td>
+                                        <td><?= htmlspecialchars($row['author']) ?></td>
+                                        <td><?= htmlspecialchars($row['created_at'] ?? '—') ?></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-warning" onclick="populateEditForm(<?= htmlspecialchars(json_encode($row)) ?>)">Edit</button>
+                                        </td>
+                                        <td>
+                                            <a href="?delete=<?= $row['id'] ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure to delete?')">Delete</a>
+                                        </td>
+                                    </tr>
+                                <?php endwhile; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
