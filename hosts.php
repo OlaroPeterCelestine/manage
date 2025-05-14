@@ -177,7 +177,7 @@ if ($editMode) {
                         <td><?= htmlspecialchars($row['role']) ?></td>
                         <td><img src="TEAM/<?= htmlspecialchars($row['image_path']) ?>" height="60"></td>
                         <td>
-                          <a href="?edit=<?= $row['id'] ?>" class="btn btn-sm btn-warning">Edit</a>
+                          <a href="?edit=<?= $row['id'] ?>" class="btn btn-sm btn-warning"onclick="return confirm('Are you sure you want to delete this member?')>Edit</a>
                           <a href="?delete=<?= $row['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this member?')">Delete</a>
                         </td>
                       </tr>
