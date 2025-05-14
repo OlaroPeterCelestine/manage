@@ -132,7 +132,7 @@
       </li><!-- End Login Page Nav -->
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="pages-blank.html">
+        <a class="nav-link collapsed" href="logout.php">
           <i class="bi bi-box-arrow-right"></i>
 
 
